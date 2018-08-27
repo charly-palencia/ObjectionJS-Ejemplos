@@ -1,11 +1,16 @@
 const appIds = require("./app-ids");
 const SteamApp = require("./SteamApp");
+const Platform = require("./Platform");
 const lodash = require("lodash");
-const url =
-  "http://store.steampowered.com/api/appdetails?appids=582010&filters=basic,platforms,price_overview&cc=US&l=english";
 const fetch = require("node-fetch");
-const parseData = async data => {
-  await SteamApp.query().truncate();
+const parseData = async (data, id) => {
+  // await knex("steam_apps").increment("t",1).update();
+  // await SteamApp.query().truncate();
+
+  if (data === null) {
+    console.log("error for", id);
+    return Promise.reject();
+  }
 
   const app = Object.values(data)[0].data;
   const attributes = [
@@ -18,17 +23,31 @@ const parseData = async data => {
     "reviews",
     "header_image",
     "website",
-    "price_overview"
+    "price_overview",
+    "platforms"
   ];
-  const steamAppData = lodash.pick(app, attributes);
+  return lodash.pick(app, attributes);
+};
 
+const fetchInformation = async () => {
   try {
-    await SteamApp.query().insert(steamAppData);
+    await Platform.knex().raw("TRUNCATE platforms RESTART IDENTITY CASCADE");
+    await SteamApp.knex().raw("TRUNCATE steam_apps  RESTART IDENTITY CASCADE");
+
+    const requests = appIds.map(id => {
+      const url = `http://store.steampowered.com/api/appdetails?appids=${id}&filters=basic,platforms,price_overview&cc=US&l=english`;
+      return fetch(url)
+        .then(res => res.json())
+        .then(data => parseData(data, id));
+    });
+
+    const apps = await Promise.all(requests);
+    await SteamApp.query()
+      .allowInsert("")
+      .insertWithRelated(apps);
   } catch (error) {
     console.log(error);
   }
 };
-fetch(url)
-  .then(res => res.json())
-  .then(parseData)
-  .then(process.exit);
+
+fetchInformation();
