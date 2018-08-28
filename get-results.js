@@ -9,9 +9,9 @@ builder = SteamApp.query().findById(10);
 
 // #get multiple result findByIds
 // select "steam_apps".* from "steam_apps" where "steam_apps"."id" in (2, 3, 5)
-builder = SteamApp.query().findByIds([2, 3, 5]);
+builder = SteamApp.query().findByIds([2, 3]);
 // console.log(builder.toSql());
-// console.log(builder.then(console.log));
+// console.log(builder.then(s => console.log(s.length)));
 // .then(console.log);
 
 // #get multiple result findByIds
@@ -31,7 +31,8 @@ builder = SteamApp.query()
 
 // #findOne( i don't like fist knex method)
 // builder = SteamApp.query().findOne({ is_free: true });
-builder = SteamApp.query().findOne({ is_free: false });
+builder = SteamApp.query().findOne({ type: "dlc" });
+// console.log(builder.toSql());
 // builder.then(console.log);
 
 //builder with eager
@@ -46,10 +47,10 @@ builder = SteamApp.query()
 //builder with  joins
 //select "steam_apps".* from "steam_apps" inner join "platforms" on "platforms"."steam_app_id" = "steam_apps"."id" where "reviews" is null and "platforms"."linux" = ? limit ? , [true,1]
 builder = SteamApp.query()
-  .where("reviews", null)
-  .where("platforms.linux", true)
-  .joinRelation("platforms")
+  .orderBy("id", "desc")
+  .eager("platforms")
   .limit(1);
+// console.log(builder.toSql());
 builder.then(console.log);
 
 //builder with  joins +  eager

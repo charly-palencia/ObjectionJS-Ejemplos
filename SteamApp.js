@@ -6,6 +6,26 @@ class SteamApp extends BaseModel {
     return "steam_apps";
   }
 
+  static get jsonSchema() {
+    return {
+      type: "object",
+      // required: ["name"],
+
+      properties: {
+        id: { type: "integer" },
+        name: { type: ["string", "null"] },
+        price_overview: {
+          type: "object",
+          properties: {
+            initial: { type: "number" },
+            final: { type: "number" },
+            currency: { type: "string" }
+          }
+        }
+      }
+    };
+  }
+
   static get relationMappings() {
     return {
       platforms: {
